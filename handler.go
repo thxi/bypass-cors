@@ -64,7 +64,7 @@ func (handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// forward headers
+	// forward headers to request
 	for k, v := range r.Header {
 		proxyReq.Header.Add(k, strings.Join(v, " "))
 	}
@@ -77,7 +77,7 @@ func (handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// forward headers
+	// forward headers to response
 	for k, v := range proxyResp.Header {
 		w.Header().Add(k, strings.Join(v, " "))
 	}

@@ -16,7 +16,7 @@ import (
 var port string
 var prettyPrint bool
 
-func init() {
+func initFlags() {
 	flag.StringVar(&port, "p", "3228", "server port")
 	flag.BoolVar(&prettyPrint, "pp", false, "enable pretty print")
 
@@ -28,11 +28,14 @@ func init() {
 }
 
 func main() {
+	initFlags()
+
 	c := cors.New(cors.Options{
 		AllowedOrigins:   []string{"*"},
 		AllowCredentials: true,
 		AllowedHeaders:   []string{"*"},
 		AllowedMethods:   []string{"GET", "HEAD", "POST", "PUT", "DELETE", "PATCH"},
+		Debug:            true,
 	})
 	h := c.Handler(handler{})
 
