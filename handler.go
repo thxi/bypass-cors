@@ -6,6 +6,7 @@ import (
 	"io"
 	"io/ioutil"
 	"net/http"
+	"net/http/pprof"
 	"net/url"
 	"strings"
 
@@ -37,6 +38,10 @@ func getRequestURL(r *http.Request) (*url.URL, error) {
 var errRootRequest = errors.New("root request")
 
 func (handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	if strings.HasPrefix(r.URL.String(), "/debug/pprof") {
+		pprof.Index(w, r)
+		return
+	}
 	if r.URL.String() == "/" {
 		// TODO add error
 		w.WriteHeader(http.StatusBadRequest)

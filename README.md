@@ -3,4 +3,5 @@ TODO:
 - [ ] deploy to heroku
 - [ ] add unit tests
 - [ ] add a good readme
-- [ ] profiling
+- [x] profiling
+- [ ] graceful shutdown

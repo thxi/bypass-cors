@@ -5,6 +5,8 @@ import (
 	"net/http"
 	"os"
 
+	_ "net/http/pprof"
+
 	"github.com/rs/cors"
 	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
