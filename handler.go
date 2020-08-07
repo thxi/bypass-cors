@@ -25,7 +25,7 @@ func writeError(w io.Writer, err error) error {
 	return enc.Encode(errorStruct{Error: err.Error()})
 }
 
-// getRequestURL returns the requested URL to bypass-cors
+// getRequestURL returns the proxy request URL
 func getRequestURL(r *http.Request) (*url.URL, error) {
 	p := r.URL.String()[1:]
 	if !strings.HasPrefix(p, "http") {
@@ -43,7 +43,6 @@ func (handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	if r.URL.String() == "/" {
-		// TODO add error
 		w.WriteHeader(http.StatusBadRequest)
 		writeError(w, errRootRequest)
 
@@ -73,17 +72,20 @@ func (handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 	log.Trace().Str("url", URL.String()).Msg("making a proxy request")
 	// TODO: what about following redirects?
-	res, err := http.DefaultClient.Do(proxyReq)
+	proxyResp, err := http.DefaultClient.Do(proxyReq)
 	if err != nil {
 		writeError(w, err)
 		log.Err(err).Str("method", r.Method).Str("url", URL.String()).Msg("failed to send proxy request")
 		return
 	}
 
-	// TODO forward response headers
+	// forward headers
+	for k, v := range proxyResp.Header {
+		w.Header().Add(k, strings.Join(v, " "))
+	}
 
 	// TODO stream body?
-	body, err := ioutil.ReadAll(res.Body)
+	body, err := ioutil.ReadAll(proxyResp.Body)
 	if err != nil {
 		writeError(w, err)
 		log.Err(err).Str("method", r.Method).Str("url", r.URL.String()).Msg("failed to read response body")
@@ -91,7 +93,7 @@ func (handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// ignoring error
-	err = res.Body.Close()
+	err = proxyResp.Body.Close()
 	if err != nil {
 		log.Err(err).Str("method", r.Method).Str("url", r.URL.String()).Msg("failed to close response body")
 		return
