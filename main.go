@@ -20,7 +20,6 @@ func init() {
 	flag.StringVar(&port, "p", "3228", "server port")
 	flag.BoolVar(&prettyPrint, "pp", false, "enable pretty print")
 
-	// parse all flags set in `init`
 	flag.Parse()
 
 	if prettyPrint {
