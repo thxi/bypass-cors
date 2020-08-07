@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"errors"
 	"io"
-	"io/ioutil"
 	"net/http"
 	"net/http/pprof"
 	"net/url"
@@ -17,11 +16,12 @@ import (
 // with double slashes
 type handler struct{}
 
-func writeError(w io.Writer, err error) error {
+func writeError(w http.ResponseWriter, err error, status int) error {
 	type errorStruct struct {
 		Error string `json:"error"`
 	}
 	enc := json.NewEncoder(w)
+	w.WriteHeader(status)
 	return enc.Encode(errorStruct{Error: err.Error()})
 }
 
@@ -43,8 +43,7 @@ func (handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	if r.URL.String() == "/" {
-		w.WriteHeader(http.StatusBadRequest)
-		writeError(w, errRootRequest)
+		writeError(w, errRootRequest, http.StatusBadRequest)
 
 		log.Warn().Msg("Root request")
 		return
@@ -52,7 +51,7 @@ func (handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 	URL, err := getRequestURL(r)
 	if err != nil {
-		writeError(w, err)
+		writeError(w, err, http.StatusBadRequest)
 		log.Err(err).Str("url", r.URL.String()).Msg("failed to parse url")
 		return
 	}
@@ -60,7 +59,7 @@ func (handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	// create proxy request
 	proxyReq, err := http.NewRequest(r.Method, URL.String(), r.Body)
 	if err != nil {
-		writeError(w, err)
+		writeError(w, err, http.StatusInternalServerError)
 		log.Err(err).Str("method", r.Method).Str("url", URL.String()).Msg("failed to create proxy request")
 		return
 	}
@@ -71,10 +70,9 @@ func (handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	}
 
 	log.Trace().Str("url", URL.String()).Msg("making a proxy request")
-	// TODO: what about following redirects?
 	proxyResp, err := http.DefaultClient.Do(proxyReq)
 	if err != nil {
-		writeError(w, err)
+		writeError(w, err, http.StatusInternalServerError)
 		log.Err(err).Str("method", r.Method).Str("url", URL.String()).Msg("failed to send proxy request")
 		return
 	}
@@ -84,24 +82,17 @@ func (handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		w.Header().Add(k, strings.Join(v, " "))
 	}
 
-	// TODO stream body?
-	body, err := ioutil.ReadAll(proxyResp.Body)
+	_, err = io.Copy(w, proxyResp.Body)
 	if err != nil {
-		writeError(w, err)
-		log.Err(err).Str("method", r.Method).Str("url", r.URL.String()).Msg("failed to read response body")
+		writeError(w, err, http.StatusInternalServerError)
+		log.Err(err).Str("method", r.Method).Str("url", r.URL.String()).Msg("failed to copy response body")
 		return
 	}
 
-	// ignoring error
 	err = proxyResp.Body.Close()
 	if err != nil {
 		log.Err(err).Str("method", r.Method).Str("url", r.URL.String()).Msg("failed to close response body")
 		return
-	}
-
-	_, err = w.Write(body)
-	if err != nil {
-		log.Err(err).Str("method", r.Method).Str("url", URL.String()).Msg("failed to write response")
 	}
 
 	log.Info().Str("method", r.Method).Str("url", r.URL.String()).Msg("succ")

@@ -4,6 +4,7 @@ import (
 	"flag"
 	"net/http"
 	"os"
+	"time"
 
 	_ "net/http/pprof"
 
@@ -12,22 +13,22 @@ import (
 	"github.com/rs/zerolog/log"
 )
 
-// PORT is a port which the server will listen on
-var PORT string
+var port string
+var prettyPrint bool
 
 func init() {
-	flag.StringVar(&PORT, "p", "3228", "server port")
-}
-
-func main() {
-	// TODO: change to normal log
-	log.Logger = log.Output(zerolog.ConsoleWriter{Out: os.Stderr})
+	flag.StringVar(&port, "p", "3228", "server port")
+	flag.BoolVar(&prettyPrint, "pp", false, "enable pretty print")
 
 	// parse all flags set in `init`
 	flag.Parse()
 
-	log.Info().Str("port", PORT).Msg("starting server")
+	if prettyPrint {
+		log.Logger = log.Output(zerolog.ConsoleWriter{Out: os.Stdout, TimeFormat: time.Stamp})
+	}
+}
 
+func main() {
 	c := cors.New(cors.Options{
 		AllowedOrigins:   []string{"*"},
 		AllowCredentials: true,
@@ -36,5 +37,6 @@ func main() {
 	})
 	h := c.Handler(handler{})
 
-	http.ListenAndServe(":"+PORT, h)
+	log.Info().Str("port", port).Msg("starting server")
+	http.ListenAndServe(":"+port, h)
 }
