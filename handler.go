@@ -1,7 +1,6 @@
 package main
 
 import (
-	"bytes"
 	"encoding/json"
 	"errors"
 	"io"
@@ -27,7 +26,7 @@ func writeError(w io.Writer, err error) error {
 
 // getRequestURL returns the requested URL to bypass-cors
 func getRequestURL(r *http.Request) (*url.URL, error) {
-	p := r.URL.Path[1:]
+	p := r.URL.String()[1:]
 	if !strings.HasPrefix(p, "http") {
 		p = "http://" + p
 	}
@@ -54,17 +53,8 @@ func (handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// TODO stream body
-	// extract request body
-	b, err := ioutil.ReadAll(r.Body)
-	if err != nil {
-		writeError(w, err)
-		log.Err(err).Str("url", r.URL.String()).Msg("failed to read body")
-		return
-	}
-
 	// create proxy request
-	proxyReq, err := http.NewRequest(r.Method, URL.String(), bytes.NewReader(b))
+	proxyReq, err := http.NewRequest(r.Method, URL.String(), r.Body)
 	if err != nil {
 		writeError(w, err)
 		log.Err(err).Str("method", r.Method).Str("url", URL.String()).Msg("failed to create proxy request")
@@ -76,6 +66,7 @@ func (handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		proxyReq.Header.Add(k, strings.Join(v, " "))
 	}
 
+	log.Trace().Str("url", URL.String()).Msg("making a proxy request")
 	// TODO: what about following redirects?
 	res, err := http.DefaultClient.Do(proxyReq)
 	if err != nil {
@@ -86,11 +77,18 @@ func (handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 	// TODO forward response headers
 
-	// TODO stream body
+	// TODO stream body?
 	body, err := ioutil.ReadAll(res.Body)
 	if err != nil {
 		writeError(w, err)
-		log.Err(err).Str("url", r.URL.String()).Msg("failed to read response body")
+		log.Err(err).Str("method", r.Method).Str("url", r.URL.String()).Msg("failed to read response body")
+		return
+	}
+
+	// ignoring error
+	err = res.Body.Close()
+	if err != nil {
+		log.Err(err).Str("method", r.Method).Str("url", r.URL.String()).Msg("failed to close response body")
 		return
 	}
 
