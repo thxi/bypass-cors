@@ -38,6 +38,13 @@ func getRequestURL(r *http.Request) (*url.URL, error) {
 var errRootRequest = errors.New("root request")
 
 func (handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	// can ignore the error here
+	defer func() {
+		if r.Body != nil {
+			r.Body.Close()
+		}
+	}()
+
 	if strings.HasPrefix(r.URL.String(), "/debug/pprof") {
 		pprof.Index(w, r)
 		return
@@ -83,6 +90,8 @@ func (handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	}
 
 	_, err = io.Copy(w, proxyResp.Body)
+	// note: calling Close twice is okay in this case
+	defer proxyResp.Body.Close()
 	if err != nil {
 		writeError(w, err, http.StatusInternalServerError)
 		log.Err(err).Str("method", r.Method).Str("url", r.URL.String()).Msg("failed to copy response body")
@@ -91,9 +100,10 @@ func (handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 	err = proxyResp.Body.Close()
 	if err != nil {
+		writeError(w, err, http.StatusInternalServerError)
 		log.Err(err).Str("method", r.Method).Str("url", r.URL.String()).Msg("failed to close response body")
 		return
 	}
 
-	log.Info().Str("method", r.Method).Str("url", r.URL.String()).Msg("succ")
+	log.Info().Str("method", r.Method).Str("url", URL.String()).Msg("succ")
 }

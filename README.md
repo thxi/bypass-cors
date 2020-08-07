@@ -6,4 +6,4 @@ TODO:
 - [x] profiling
 - [x] remove todos
 - [ ] dockerfile
-- [ ] close req bodies and handle errors
+- [x] close req bodies and handle errors

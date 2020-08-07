@@ -35,7 +35,6 @@ func main() {
 		AllowCredentials: true,
 		AllowedHeaders:   []string{"*"},
 		AllowedMethods:   []string{"GET", "HEAD", "POST", "PUT", "DELETE", "PATCH"},
-		Debug:            true,
 	})
 	h := c.Handler(handler{})
 
