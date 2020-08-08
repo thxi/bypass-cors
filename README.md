@@ -27,14 +27,14 @@ let resp = await fetch('http://localhost:3228/google.com');
 
 `docker`
 
-TODO:
+## TODO:
 
 - [ ] deploy to heroku
 - [x] add unit tests
 - [ ] add a good readme
 - [x] profiling
 - [x] remove todos
-- [ ] dockerfile
+- [x] dockerfile
 - [x] close req bodies and handle errors
 
 \* These 3xx codes are followd:

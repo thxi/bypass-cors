@@ -39,5 +39,10 @@ func main() {
 	h := c.Handler(handler{})
 
 	log.Info().Str("port", port).Msg("starting server")
-	http.ListenAndServe(":"+port, h)
+
+	err := http.ListenAndServe(":"+port, h)
+	if err != nil {
+		log.Err(err).Send()
+		os.Exit(1)
+	}
 }
