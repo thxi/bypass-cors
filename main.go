@@ -22,6 +22,12 @@ func initFlags() {
 
 	flag.Parse()
 
+	envPort := os.Getenv("PORT")
+	if envPort != "" {
+		port = envPort
+		log.Info().Str("port", port).Msg("using env port")
+	}
+
 	if prettyPrint {
 		log.Logger = log.Output(zerolog.ConsoleWriter{Out: os.Stdout, TimeFormat: time.Stamp})
 	}
