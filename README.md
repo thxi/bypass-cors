@@ -15,13 +15,15 @@ Features:
 
 ## Example
 
-An example application is deployed to [heroku]()
+The app is deployed to [heroku](https://cors-proxy-io.herokuapp.com)
 
 ```javascript
-let resp = await fetch('http://localhost:3228/https://google.com');
+let resp = await fetch('https://cors-proxy-io.herokuapp.com/google.com');
 // or, if the application is running locally
 let resp = await fetch('http://localhost:3228/google.com');
 ```
+
+or open https://cors-proxy-io.herokuapp.com/google.com in your web browser
 
 ## Run
 
@@ -57,16 +59,6 @@ make docker-run
 # or, if you want to set the flags yourself
 docker run -p 1337:1337 bypass-cors -p 1337 -pp
 ```
-
-## TODO:
-
-- [ ] deploy to heroku
-- [x] add unit tests
-- [x] add a good readme
-- [x] profiling
-- [x] remove todos
-- [x] dockerfile
-- [x] close req bodies and handle errors
 
 \* These 3xx codes are followd:
 
