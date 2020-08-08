@@ -19,19 +19,50 @@ An example application is deployed to [heroku]()
 
 ```javascript
 let resp = await fetch('http://localhost:3228/https://google.com');
-// or
+// or, if the application is running locally
 let resp = await fetch('http://localhost:3228/google.com');
 ```
 
-## Deploy
+## Run
 
-`docker`
+### Flags
+
+```
+-p string
+      server port (default "3228")
+-pp
+      enable pretty print
+```
+
+### Locally
+
+```bash
+go run .
+# or with flags
+go run . -pp -p 8080
+```
+
+### Docker
+
+To build the image locally:
+
+```bash
+make docker-build
+```
+
+To run it locally:
+
+```bash
+make docker-run
+# or, if you want to set the flags yourself
+docker run -p 1337:1337 bypass-cors -p 1337 -pp
+```
 
 ## TODO:
 
 - [ ] deploy to heroku
 - [x] add unit tests
-- [ ] add a good readme
+- [x] add a good readme
 - [x] profiling
 - [x] remove todos
 - [x] dockerfile
