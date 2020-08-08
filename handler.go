@@ -5,7 +5,6 @@ import (
 	"errors"
 	"io"
 	"net/http"
-	"net/http/pprof"
 	"net/url"
 	"strings"
 
@@ -45,10 +44,6 @@ func (handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		}
 	}()
 
-	if strings.HasPrefix(r.URL.String(), "/debug/pprof") {
-		pprof.Index(w, r)
-		return
-	}
 	if r.URL.String() == "/" {
 		writeError(w, errRootRequest, http.StatusBadRequest)
 
@@ -75,6 +70,8 @@ func (handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	for k, v := range r.Header {
 		proxyReq.Header.Add(k, strings.Join(v, " "))
 	}
+	proxyReq.Header.Set("Referer", "")
+	proxyReq.Header.Set("Origin", "")
 
 	log.Trace().Str("url", URL.String()).Msg("making a proxy request")
 	proxyResp, err := http.DefaultClient.Do(proxyReq)
@@ -88,6 +85,8 @@ func (handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	for k, v := range proxyResp.Header {
 		w.Header().Add(k, strings.Join(v, " "))
 	}
+
+	w.WriteHeader(proxyResp.StatusCode)
 
 	_, err = io.Copy(w, proxyResp.Body)
 	// note: calling Close twice is okay in this case
@@ -105,5 +104,5 @@ func (handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	log.Info().Str("method", r.Method).Str("url", URL.String()).Msg("succ")
+	log.Info().Str("method", r.Method).Str("url", URL.String()).Str("status", proxyResp.Status).Msg("succ")
 }
