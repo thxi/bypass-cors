@@ -36,12 +36,7 @@ func initFlags() {
 func main() {
 	initFlags()
 
-	c := cors.New(cors.Options{
-		AllowedOrigins:   []string{"*"},
-		AllowCredentials: true,
-		AllowedHeaders:   []string{"*"},
-		AllowedMethods:   []string{"GET", "HEAD", "POST", "PUT", "DELETE", "PATCH"},
-	})
+	c := cors.AllowAll()
 	h := c.Handler(handler{})
 
 	log.Info().Str("port", port).Msg("starting server")

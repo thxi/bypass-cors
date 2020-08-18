@@ -83,6 +83,9 @@ func (handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 	// forward headers to response
 	for k, v := range proxyResp.Header {
+		if strings.HasPrefix(strings.ToLower(k), "access-control") {
+			continue
+		}
 		w.Header().Add(k, strings.Join(v, " "))
 	}
 
@@ -104,5 +107,5 @@ func (handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	log.Info().Str("method", r.Method).Str("url", URL.String()).Str("status", proxyResp.Status).Msg("succ")
+	log.Info().Str("method", r.Method).Str("url", URL.String()).Str("status", proxyResp.Status).Msg("success")
 }
