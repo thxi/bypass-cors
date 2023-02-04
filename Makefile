@@ -1,3 +1,5 @@
+help:
+	cat Makefile
 
 docker-build:
 	docker build \
